@@ -23,7 +23,7 @@ stages:
     - task: Docker@2
       displayName: Build an image
       inputs:
-        containerRegistry: 'DockerHub'
+        containerRegistry: 'Dockerhub'
         repository: 'dockerimage1'
         command: 'buildAndPush'
         Dockerfile: '**/Dockerfile'
