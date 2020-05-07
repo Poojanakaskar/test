@@ -1,7 +1,5 @@
 FROM ubuntu
- 
-MAINTAINER user@gmail.com 
+RUN apt-get update
+RUN apt-get install wget
+RUN apt-get install unzip
 
-RUN apt-get update 
-RUN apt-get install –y nginx 
- 
