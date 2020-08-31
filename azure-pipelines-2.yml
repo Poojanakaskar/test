@@ -74,13 +74,13 @@ stages:
               codeCoverageTool: Cobertura
               summaryFileLocation: "$(sourceDirectory)/coverage.xml"
 
-          - task: BuildQualityChecks@6
-            displayName: "Code coverage check"
-            inputs:
-              checkCoverage: true
-              coverageFailOption: "fixed"
-              coverageType: "lines"
-              coverageThreshold: $(CodeCoverageThreshold)
+          # - task: BuildQualityChecks@6
+          #   displayName: "Code coverage check"
+          #   inputs:
+          #     checkCoverage: true
+          #     coverageFailOption: "fixed"
+          #     coverageType: "lines"
+          #     coverageThreshold: $(CodeCoverageThreshold)
   - stage: Docker
     displayName: Docker Stage
     dependsOn: Build
