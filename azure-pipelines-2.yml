@@ -1,19 +1,96 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
 
 trigger:
-- master
+  batch: true
+  branches:
+    include:
+      - "master"
+  paths:
+    include:
+      - addition-service/*
 
-pool:
-  vmImage: 'ubuntu-latest'
+variables:
+    projectName: "addition-service"
+    projectVersion: "1.0.0"
+    sourceDirectory: "addition-service"
+    CodeCoverageThreshold: "80"
+    PythonPath: "./"
+    SourcesDirForCoverage: "./"
+    UnitTestsDir: "./tests/"
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+stages:
+  - stage: Build
+    displayName: Build stage
+    jobs:
+      - job: Build
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: "3.6"
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+          - bash: |
+              python -m pip install --upgrade pip
+              pip install pylint coverage
+            displayName: "Install pip packages."
+            workingDirectory: $(sourceDirectory)
+          - bash: |
+              pip install -r requirements.txt
+            displayName: "Install dependencies"
+            workingDirectory: $(sourceDirectory)
+          - bash: |
+              export PYTHONPATH=$(PythonPath)
+              pip install pylint_runner
+              pylint_runner
+            displayName: "Run lint tests"
+            workingDirectory: $(sourceDirectory)
+            continueOnError: true
+          - bash: |
+              export PYTHONPATH=$(PythonPath)
+              pip install unittest-xml-reporting
+              python -m xmlrunner discover -s $(UnitTestsDir) -o ./test-reports
+            displayName: "Run Unit Tests"
+            workingDirectory: $(sourceDirectory)
+            continueOnError: true
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFiles: "$(sourceDirectory)/test-reports/TEST-*.xml"
+              testRunTitle: "Publish test results"
+              failTaskOnFailedTests: true
+            displayName: "Publish Unit Tests"
+
+          - bash: |
+              export PYTHONPATH=$(PythonPath)
+              coverage run --source=$(SourcesDirForCoverage) -m unittest discover -s $(UnitTestsDir)
+            displayName: "Run code coverage"
+            workingDirectory: $(sourceDirectory)
+            continueOnError: true
+          - script: |
+              coverage report -m 
+              coverage xml
+            displayName: "Generate coverage"
+            workingDirectory: $(sourceDirectory)
+          - task: PublishCodeCoverageResults@1
+            displayName: "Publish Coverage"
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: "$(sourceDirectory)/coverage.xml"
+
+          - task: BuildQualityChecks@6
+            displayName: "Code coverage check"
+            inputs:
+              checkCoverage: true
+              coverageFailOption: "fixed"
+              coverageType: "lines"
+              coverageThreshold: $(CodeCoverageThreshold)
+  - stage: Docker
+    displayName: Docker Stage
+    dependsOn: Build
+    jobs:
+      - job: Docker
+        steps:
+          - bash: |
+              cd $(sourceDirectory)
+              docker build \
+                  -t $(projectName) \
+                  .
+            failOnStderr: true
+            displayName: "docker build"
