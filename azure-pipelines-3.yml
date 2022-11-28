@@ -23,3 +23,5 @@ steps:
     repository: 'poojanakaskar/dockerimage1'
     command: 'buildAndPush'
     Dockerfile: '**/Dockerfile'
+    tags: '$(tag)'
+
