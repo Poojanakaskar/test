@@ -27,4 +27,9 @@ steps:
     command: 'buildAndPush'
     Dockerfile: '**/Dockerfile'
     tags: '$(tag)'
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
 
